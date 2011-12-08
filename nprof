@@ -2894,7 +2894,7 @@ var entriesProviders = {
   'mac': MacCppEntriesProvider
 };
 
-var params = processArguments(arguments);
+var params = processArguments([]);
 var snapshotLogProcessor;
 if (params.snapshotLogFileName) {
   snapshotLogProcessor = new SnapshotLogProcessor();
@@ -2907,4 +2907,31 @@ var tickProcessor = new TickProcessor(
   params.stateFilter,
   snapshotLogProcessor);
 tickProcessor.processLogFile(params.logFileName);
-tickProcessor.printStatistics();
+//tickProcessor.printStatistics();
+
+function blacklistingClone(obj, blacklist) {
+  if (typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.concat();
+  var result = {};
+  Object.keys(obj).filter(function(key) {
+    return blacklist.indexOf(key)===-1
+  }).forEach(function(key) {
+    result[key] = blacklistingClone(obj[key], blacklist)
+  })
+  return result
+}
+
+
+var bu_json = blacklistingClone(tickProcessor.profile_.getBottomUpProfile(), ['parent'])
+bu_json.root_ = bu_json.root_.children['/usr/local/bin/node']
+bu_json = JSON.stringify(bu_json)
+var bu_template = require('fs').readFileSync(__dirname+'/bottomUp.html', 'utf8')
+var bu_generated = bu_template.replace(/<<<<BU JSON>>>>/, bu_json).replace(/<<<<strip toplevel stuff>>>>/, 'false')
+require('fs').writeFileSync(process.argv[2] || 'cpu_bu.html', bu_generated)
+
+
+var td_json = blacklistingClone(tickProcessor.profile_.getTopDownProfile(), ['parent'])
+td_json = JSON.stringify(td_json)
+var td_template = require('fs').readFileSync(__dirname+'/bottomUp.html', 'utf8')
+var td_generated = td_template.replace(/<<<<BU JSON>>>>/, td_json).replace(/<<<<strip toplevel stuff>>>>/, 'true')
+require('fs').writeFileSync(process.argv[3] || 'cpu_td.html', td_generated)

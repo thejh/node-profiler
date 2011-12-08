@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script>function draw() {
+var BU_DATA = <<<<BU JSON>>>>;
+
+function drawTree(rootNode, width, insertionPoint, isRoot) {
+  var block = new Block(rootNode, width)
+  var fullWidth = rootNode.totalWeight
+  var children = Object.keys(rootNode.children).map(function(name) {
+    return rootNode.children[name]
+  })
+  if (isRoot && <<<<strip toplevel stuff>>>>) {
+    children = children.filter(function(child) {
+      var isOk = child.label.indexOf(':') !== -1
+      if (!isOk) fullWidth -= child.totalWeight
+      return isOk
+    })
+  }
+  children.forEach(function(child) {
+    var childWidth = child.totalWeight / fullWidth
+    if (childWidth > 0.02) {
+      drawTree(child, childWidth, block.block)
+    }
+  })
+  block.labelNode.addEventListener('click', function(evt) {
+    while (body.hasChildNodes()) body.removeChild(body.lastChild)
+    drawTree(rootNode, 1, body)
+  }, false);
+  insertionPoint.appendChild(block.block)
+}
+
+function Block(node, width) {
+  var block = document.createElement('div');
+  block.className = 'block';
+  block.style.width = width*100 + '%';
+    
+  var labelBlock = this.labelNode = document.createElement('div');
+  labelBlock.className = 'blockLabel';
+  labelBlock.style.backgroundColor = 'lightblue';
+  labelBlock.appendChild(document.createTextNode(node.label));
+  block.appendChild(labelBlock);
+    
+  var contentsBlock = document.createElement('div');
+  contentsBlock.className = 'blockContents';
+  block.appendChild(contentsBlock);
+    
+  this.block = block;
+  this.contents = contentsBlock;
+}
+
+Block.prototype.add = function(child) {
+  if (child instanceof Block) child = child.block;
+  this.contents.appendChild(child);
+};
+
+var body = document.getElementsByTagName('body')[0];
+var root = BU_DATA.root_
+drawTree(root, 1, body, true)
+/*var root = new Block('root', 1);
+body.appendChild(root.block);
+var foo = new Block('foo', 0.33333);
+root.add(foo);
+var bar = new Block('bar', 0.66667);
+root.add(bar);*/
+
+    }</script>
+    <style>
+.block {
+    float: left;
+    outline: 1px solid;
+}
+
+.blockLabel {
+    text-align: center;
+}
+    </style>
+  </head>
+  <body onload="draw()">
+  </body>
+</html>
